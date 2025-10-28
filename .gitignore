@@ -1,0 +1,31 @@
+# Gradle build files
+.gradle/
+build/
+!gradle-wrapper.jar
+
+# Android Studio specific
+.idea/
+*.iml
+
+# Local configuration
+local.properties
+
+# Logs
+*.log
+
+# APKs and AABs
+*.apk
+*.ap_
+*.aab
+
+# Keystore files (security)
+*.keystore
+*.jks
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Captures and screenshots
+captures/
+outputs/
