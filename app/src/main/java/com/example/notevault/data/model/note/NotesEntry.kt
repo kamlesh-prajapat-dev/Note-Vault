@@ -8,15 +8,15 @@ import java.time.LocalDateTime
 @Serializable
 data class NotesEntry(
     @SerialName(value = "id")
-    val id: ObjectId,
+    val id: String = "",
 
     @SerialName(value = "title")
-    val title: String,
+    val title: String = "",
 
     @SerialName("content")
-    val content: String,
+    val content: String = "",
 
     @SerialName("date")
     @Contextual
-    val date: LocalDateTime
+    val date: LocalDateTime = LocalDateTime.now()
 )

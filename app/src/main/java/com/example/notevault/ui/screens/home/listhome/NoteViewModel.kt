@@ -10,7 +10,6 @@ import com.example.notevault.NotesApplication
 import com.example.notevault.data.UserPreferencesRepository
 import com.example.notevault.data.model.note.NoteEntry
 import com.example.notevault.data.model.note.NotesEntry
-import com.example.notevault.data.model.note.ObjectId
 import com.example.notevault.data.network.NoteApi
 import com.example.notevault.data.repository.NoteRepository
 import kotlinx.coroutines.Dispatchers
@@ -86,7 +85,7 @@ class NoteViewModel(
         _multipleSelectOption.value = flag
     }
 
-    fun toggleSelection(noteId: ObjectId, isSelected: Boolean) {
+    fun toggleSelection(noteId: String, isSelected: Boolean) {
         _listOfNoteEntries.value = _listOfNoteEntries.value.map {
             if (it.id == noteId) it.copy(
                 isSelected = isSelected

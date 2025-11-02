@@ -46,7 +46,6 @@ fun SplashScreen(
     }
 
 
-
     Box(
         modifier = Modifier
             .fillMaxSize()

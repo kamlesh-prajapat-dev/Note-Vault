@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.notevault.NotesApplication
 import com.example.notevault.data.UserPreferencesRepository
 import com.example.notevault.data.model.note.NoteEntry
+import com.example.notevault.data.model.note.NotesEntry
 import com.example.notevault.data.network.NoteApi
 import com.example.notevault.data.repository.NoteRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,11 +17,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import retrofit2.Response
 import java.time.LocalDateTime
 
 class EachNoteViewModel(
-    userPreferencesRepository: UserPreferencesRepository,
-    private val repository: NoteRepository = NoteRepository(NoteApi.create(userPreferencesRepository))
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val repository: NoteRepository = NoteRepository(NoteApi.create(userPreferencesRepository = userPreferencesRepository))
 ) : ViewModel() {
 
     companion object {
@@ -32,8 +34,27 @@ class EachNoteViewModel(
         }
     }
 
+    private val _isFocusedOnContent = MutableStateFlow(false)
+    val isFocusedOnContent : StateFlow<Boolean> = _isFocusedOnContent.asStateFlow()
+
+    fun onChangeIsFocusedOnContent (flag: Boolean) {
+        _isFocusedOnContent.value = flag
+    }
+
+    private val _isFocusedOnTitle = MutableStateFlow(false)
+    val isFocusedTitle: StateFlow<Boolean> = _isFocusedOnTitle.asStateFlow()
+
+    fun onChangeIsFocusedOnTitle(flag: Boolean) {
+        _isFocusedOnTitle.value = flag
+    }
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     private val _eachNote = MutableStateFlow(NoteEntry())
     val eachNote : StateFlow<NoteEntry> = _eachNote.asStateFlow()
+
+    private val _dummyEntry = MutableStateFlow(NoteEntry())
 
     private val _noOfCharacters = MutableStateFlow(if (eachNote.value.content.isNotEmpty()) eachNote.value.content.length else 0)
     val noOfCharacters : StateFlow<Int> = _noOfCharacters.asStateFlow()
@@ -42,24 +63,22 @@ class EachNoteViewModel(
         _noOfCharacters.value = num
     }
 
-
     // this function - get note entry from list of noteEntries when choose on note
     fun updateNote(noteEntry: NoteEntry) {
         _eachNote.update {
-            it.copy(
-                id = noteEntry.id,
-                title = noteEntry.title,
-                content = noteEntry.content,
-                date = noteEntry.date
-            )
+           noteEntry
         }
+
+        _dummyEntry.update {
+            noteEntry
+        }
+
+        _noOfCharacters.value = noteEntry.content.length
     }
 
     fun updateContent(newContent: String) {
         _eachNote.update {
             it.copy(
-                id = it.id,
-                title = it.title,
                 content = newContent,
                 date = LocalDateTime.now()
             )
@@ -69,12 +88,7 @@ class EachNoteViewModel(
     fun updateTitle(newTitle: String) {
         _eachNote.update {
             it.copy(
-                id = it.id,
-                title = when(it.title) {
-                    "Title" -> newTitle
-                    else -> it.title + newTitle
-                },
-                content = it.content,
+                title = newTitle,
                 date = LocalDateTime.now()
             )
         }
@@ -82,15 +96,37 @@ class EachNoteViewModel(
 
     // this function save noteEntry in DB
     fun updateNoteEntry() {
-        var updatedNoteEntry: NoteEntry = eachNote.value
+        // 1st Task
+        _isLoading.value = true
+
+        // 2nd Task
+        if (_dummyEntry.value == _eachNote.value) {
+            _isLoading.value = false
+            return
+        }
+
+        // 3rd Task
+        val updatedNoteEntry: NoteEntry = eachNote.value
+        val newEntry = NotesEntry(id = updatedNoteEntry.id, title = updatedNoteEntry.title, content = updatedNoteEntry.content, date = LocalDateTime.now())
+
+        // 4th Task
         viewModelScope.launch {
             try {
-                updatedNoteEntry = repository.updateNote(noteEntry = eachNote.value)
+                val updatedEntry = updateEntry(newEntry)
+                val body = updatedEntry.body()
+                if (updatedEntry.isSuccessful && body != null) {
+                    updateNote(NoteEntry(body.id, body.title, body.content, body.date))
+                    _isLoading.value = false
+                }
             } catch (e: Exception) {
-
+                _isLoading.value = false
+                val msg = e.message
             }
         }
-        updateNote(updatedNoteEntry)
     }
 
+    // Database Task
+    private suspend fun updateEntry(notesEntry: NotesEntry): Response<NotesEntry> {
+        return repository.updateNote(notesEntry.id, notesEntry)
+    }
 }

@@ -48,6 +48,7 @@ import java.util.Locale
 fun NotesListScreen(
     viewModel: NoteViewModel,
     onNavigation: (NoteEntry) -> Unit = {},
+    onSearchNavigation: (List<NoteEntry>) -> Unit = {},
     navController: NavHostController,
 ) {
     val listOfNoteEntries by viewModel.listOfNoteEntries.collectAsState()
@@ -139,6 +140,7 @@ fun NotesListScreen(
                         onClick = {
                             if (multipleSelectOption) {
                                 // Search Action
+                                onSearchNavigation(listOfNoteEntries)
 
                             } else {
                                 // Delete Action

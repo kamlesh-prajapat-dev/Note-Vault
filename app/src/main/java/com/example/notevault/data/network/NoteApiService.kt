@@ -1,6 +1,6 @@
 package com.example.notevault.data.network
+
 import com.example.notevault.data.UserPreferencesRepository
-import com.example.notevault.data.model.note.NoteEntry
 import com.example.notevault.data.model.note.NotesEntry
 import com.example.notevault.data.model.serializers.LocalDateTimeSerializer
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
@@ -16,8 +16,9 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Path
 
-private const val BASE_URL = "Your IP"
+private const val BASE_URL = "Your API"
 
 private val module = SerializersModule {
     contextual(LocalDateTimeSerializer)
@@ -34,13 +35,13 @@ interface NoteApiService {
     suspend fun getNotes(): Response<List<NotesEntry>>
 
     @POST("notes")
-    suspend fun saveNote(@Body noteEntry: NoteEntry): Response<NoteEntry>
+    suspend fun saveNote(@Body noteEntry: NotesEntry): Response<NotesEntry>
 
     @DELETE("notes")
-    suspend fun deleteNoteById(@Body id: String): Response<NoteEntry>
+    suspend fun deleteNoteById(@Body id: String): Response<Unit>
 
-    @PUT("notes")
-    suspend fun updateNote(@Body noteEntry: NoteEntry) : NoteEntry
+    @PUT("notes/id/{myId}")
+    suspend fun updateNote(@Path("myId") id: String, @Body noteEntry: NotesEntry) : Response<NotesEntry>
 }
 
 object NoteApi {

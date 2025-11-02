@@ -1,4 +1,4 @@
-package com.example.notevault.ui.screens.home.eachnote
+package com.example.notevault.ui.screens.home.addnote
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,23 +12,38 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable
-fun EachNoteContentScreen(viewModel: EachNoteViewModel) {
-
+fun NewNoteScreen(
+    viewModel: NewNoteViewModel
+) {
     val isLoading by viewModel.isLoading.collectAsState()
+    val newEntry by viewModel.noteEntry.collectAsState()
+    val noOfCharacters by viewModel.noOfCharacters.collectAsState()
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        delay(300) // small delay to ensure UI is ready
+        viewModel.onChangeIsFocusedOnContent(focusRequester.requestFocus())
+    }
 
     if (isLoading) {
         Box(
@@ -48,24 +63,22 @@ fun EachNoteContentScreen(viewModel: EachNoteViewModel) {
         ),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        val noteEntry by viewModel.eachNote.collectAsState()
-        val noOfCharacters by viewModel.noOfCharacters.collectAsState()
 
         OutlinedTextField(
             modifier = Modifier.fillMaxWidth()
                 .onFocusChanged {
                     viewModel.onChangeIsFocusedOnTitle(it.isFocused)
                 },
-            value = when(noteEntry.title) {
-                "Title" -> ""
-                else -> noteEntry.title
-            },
+            value = newEntry.title,
             onValueChange = {
-                viewModel.updateTitle(it)
+                viewModel.onChangeTitle(it)
             },
             placeholder = {
                 Text(
-                    text = noteEntry.title
+                    text = "Title",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray
                 )
             },
             textStyle = TextStyle(
@@ -85,7 +98,7 @@ fun EachNoteContentScreen(viewModel: EachNoteViewModel) {
         )
 
         Text(
-            text = "${noteEntry.date.format(DateTimeFormatter.ofPattern("EEEE, MMMM dd, HH:mm", Locale.getDefault()))} | $noOfCharacters characters",
+            text = "${LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM dd, HH:mm", Locale.getDefault()))} | $noOfCharacters characters",
             fontSize = 12.sp,
             color = Color.Gray,
             fontWeight = FontWeight.SemiBold
@@ -93,15 +106,13 @@ fun EachNoteContentScreen(viewModel: EachNoteViewModel) {
 
         OutlinedTextField(
             modifier = Modifier.fillMaxWidth()
+                .focusRequester(focusRequester)
                 .onFocusChanged {
                     viewModel.onChangeIsFocusedOnContent(it.isFocused)
                 },
-            value = when(noteEntry.content) {
-                "Content" -> ""
-                else -> noteEntry.content
-            },
+            value = newEntry.content,
             onValueChange = {
-                viewModel.updateContent(it)
+                viewModel.onChangeContent(it)
                 viewModel.updateNoOfCharacters(it.length)
             },
             minLines = 40,
@@ -117,7 +128,14 @@ fun EachNoteContentScreen(viewModel: EachNoteViewModel) {
             textStyle = TextStyle(
                 fontSize = 16.sp,
                 color = Color.Gray
-            )
+            ),
+            placeholder = {
+                Text(
+                    text = "Content",
+                    fontSize = 16.sp,
+                    color = Color.Gray
+                )
+            }
         )
     }
 }
